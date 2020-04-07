@@ -1,0 +1,7 @@
+{
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "author": "Adam Jones <adam.jones@starlingbank.com>"
+}
