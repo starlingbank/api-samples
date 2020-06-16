@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const uuid = require('uuid').v4;
 
-/* Configuration */
+// Configuration. Don't hardcode these in production
 const keyUid = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
 const accessToken = 'eyJhbGciOiJQUzI1NiIsInppcCI6I...';
 const accountUid = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
