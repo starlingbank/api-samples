@@ -1,39 +1,47 @@
 package com.starlingbank;
 
+import static spark.Spark.awaitInitialization;
+import static spark.Spark.get;
+import static spark.Spark.halt;
+import static spark.Spark.path;
+import static spark.Spark.port;
+import static spark.Spark.post;
+import static spark.Spark.put;
+import static spark.Spark.threadPool;
+
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
-import com.google.common.base.Splitter;
-
 import java.io.File;
+import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 import spark.Request;
 import spark.Response;
 
-import static spark.Spark.*;
-
 public class StarlingMessageSignatureValidator {
 
-  private static final String[] ACCEPTED_ALGORITHMS = {"rsa-sha256", "rsa-sha512", "ecdsa-sha256", "ecdsa-sha512"};
-  private static final ImmutableList<String> REQUIRED_HEADERS = ImmutableList.of("date", "digest", "(request-target)");
+  private static final String[] ACCEPTED_ALGORITHMS = {"rsa-sha256", "rsa-sha512", "ecdsa-sha256",
+      "ecdsa-sha512"};
+  private static final ImmutableList<String> REQUIRED_HEADERS = ImmutableList
+      .of("date", "digest", "(request-target)");
 
   // BEGIN USER CONFIG
   private static final int port = 30000;
@@ -41,7 +49,8 @@ public class StarlingMessageSignatureValidator {
   private static final int minThreads = 2;
   private static final int timeOutMillis = 30000;
 
-  private static final String publicKeyPath = "starling-api-public.key"; // The path to the Public Key used to sign the request
+  // The path to the Public Key used to sign the request
+  private static final String publicKeyPath = "starling-api-public.key";
   // END USER CONFIG
 
   public static void main(String[] args) {
@@ -59,7 +68,7 @@ public class StarlingMessageSignatureValidator {
 
     awaitInitialization(); // Wait for server to be initialized
 
-    System.out.println("Server listening on: http://localhost:" + port +"/");
+    System.out.println("Server listening on: http://localhost:" + port + "/");
   }
 
   public static String processRequest(Request request, Response response)
@@ -86,7 +95,8 @@ public class StarlingMessageSignatureValidator {
           .withKeyValueSeparator(Splitter.on('=').limit(2))
           .split(authHeader);
     } catch (Exception e) {
-      System.err.println("ERROR: Could not process Authorization header, aborting validation check.");
+      System.err
+          .println("ERROR: Could not process Authorization header, aborting validation check.");
       halt(400, "ERROR: Could not process Authorization header, aborting validation check.");
     }
 
@@ -100,7 +110,9 @@ public class StarlingMessageSignatureValidator {
     if (!headersList.containsAll(REQUIRED_HEADERS)) {
       SortedSet<String> missingHeaders = Sets.newTreeSet(REQUIRED_HEADERS);
       missingHeaders.removeAll(headersList);
-      responseBody.add("Validation failure: authHeader is missing some required headers: " + Joiner.on(", ").join(missingHeaders) + "\n");
+      responseBody.add(
+          "Validation failure: authHeader is missing some required headers: " + Joiner.on(", ")
+              .join(missingHeaders) + "\n");
     }
 
     // Get the values for each of the signed headers listed in the Authorization header and build into a single string for verification of the Signature.
@@ -114,7 +126,8 @@ public class StarlingMessageSignatureValidator {
 
     // For non-GET requests, verify that the Message Digest supplied in the request headers matches the body payload.
     if (!request.requestMethod().equalsIgnoreCase("GET")) {
-      String payloadDigest = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-512").digest(request.bodyAsBytes()));
+      String payloadDigest = Base64.getEncoder()
+          .encodeToString(MessageDigest.getInstance("SHA-512").digest(request.bodyAsBytes()));
       if (request.headers("Digest").equals(payloadDigest)) {
         responseBody.add("Successfully verified digest against payload.\n");
       } else {
@@ -128,7 +141,8 @@ public class StarlingMessageSignatureValidator {
     System.out.println(new File(publicKeyPath).getAbsolutePath() + "\n");
 
     // Carry out the primary validation checks.
-    String validationChecks = Joiner.on("\n").join(isValid(publicKeyPath, algorithm, signingString, signature));
+    String validationChecks = Joiner.on("\n")
+        .join(isValid(publicKeyPath, algorithm, signingString, signature));
 
     String responseString = Joiner.on("\n").join(responseBody);
     response.type("text/xml");
@@ -136,7 +150,8 @@ public class StarlingMessageSignatureValidator {
     return Joiner.on("\n").join(responseString, validationChecks);
   }
 
-  public static List<String> isValid(String publicKeyPath, String algorithm, String headers, String signature)
+  public static List<String> isValid(String publicKeyPath, String algorithm, String headers,
+      String signature)
       throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
     List<String> verificationChecks = new ArrayList<>();
 
@@ -146,7 +161,9 @@ public class StarlingMessageSignatureValidator {
       javaAlgorithm = getJavaAlgorithm(algorithm);
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
-      halt(400, "ERROR: Unsupported signing algorithm, " + algorithm + ". Expected one of: " + Arrays.toString(ACCEPTED_ALGORITHMS));
+      halt(400,
+          "ERROR: Unsupported signing algorithm, " + algorithm + ". Expected one of: " + Arrays
+              .toString(ACCEPTED_ALGORITHMS));
     }
 
     // Prep Public Key from File Path - Note that this step is for the purposes of this tool and otherwise rely on the supplied keyid for retrieval.
@@ -157,18 +174,21 @@ public class StarlingMessageSignatureValidator {
           .replaceAll("\\n", "")
           .replace("-----BEGIN PUBLIC KEY-----", "")
           .replace("-----END PUBLIC KEY-----", "");
-      EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getMimeDecoder().decode(publicKeyContent));
+      EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
+          Base64.getMimeDecoder().decode(publicKeyContent));
       KeyFactory keyFactory = KeyFactory.getInstance("RSA");
       publicKey = keyFactory.generatePublic(publicKeySpec);
     } catch (Exception e) {
-      System.err.println("ERROR: Could not process Public Key, please check pre-configured publicKeyPath.");
+      System.err.println(
+          "ERROR: Could not process Public Key, please check pre-configured publicKeyPath.");
       e.printStackTrace();
       halt(400, "ERROR: Could not process Public Key, please check pre-configured publicKeyPath.");
     }
 
     // Prep Signature object using publicKey and headers
     Signature sig = Signature.getInstance(javaAlgorithm);
-    byte[] decodedSignature = Base64.getDecoder().decode(signature.getBytes(Charset.defaultCharset()));
+    byte[] decodedSignature = Base64.getDecoder()
+        .decode(signature.getBytes(Charset.defaultCharset()));
     sig.initVerify(publicKey);
     sig.update(headers.getBytes());
 
@@ -178,7 +198,7 @@ public class StarlingMessageSignatureValidator {
 
     // Verify the signature against the signed string.
     try {
-      if(sig.verify(decodedSignature)) {
+      if (sig.verify(decodedSignature)) {
         verificationChecks.add("Message signed correctly.");
       } else {
         verificationChecks.add("Message signature invalid.");
@@ -207,12 +227,13 @@ public class StarlingMessageSignatureValidator {
     try {
       String test = headerMap.get(header).replace("\"", "");
       if (test.equals("")) {
-        System.err.println("Error parsing Authorization header, could not find required element: " + header);
+        System.err.println(
+            "Error parsing Authorization header, could not find required element: " + header);
       }
       return test.trim();
-    }
-    catch (Exception e) {
-      System.err.println("Error parsing Authorization header, could not find required element: " + header);
+    } catch (Exception e) {
+      System.err.println(
+          "Error parsing Authorization header, could not find required element: " + header);
       return "";
     }
   }
