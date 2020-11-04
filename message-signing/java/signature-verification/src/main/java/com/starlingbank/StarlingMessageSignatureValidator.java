@@ -54,16 +54,43 @@ public class StarlingMessageSignatureValidator {
   // END USER CONFIG
 
   public static void main(String[] args) {
+
+    // Prep Public Key from File Path - This step is for the purposes of this tool only
+    // and would otherwise rely on the keyid supplied in the request AuthHeader for retrieval.
+    PublicKey publicKey = null;
+    try {
+      File publicKeyFile = new File(publicKeyPath);
+      System.out.println("Looking for publicKey file in:");
+      System.out.println(publicKeyFile.getAbsolutePath() + "\n");
+
+      byte[] publicKeyBytes = FileUtils.readFileToByteArray(publicKeyFile);
+      String publicKeyContent = new String(publicKeyBytes)
+          .replaceAll("\\n", "")
+          .replace("-----BEGIN PUBLIC KEY-----", "")
+          .replace("-----END PUBLIC KEY-----", "");
+
+      EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
+          Base64.getMimeDecoder().decode(publicKeyContent));
+      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      publicKey = keyFactory.generatePublic(publicKeySpec);
+
+    } catch (Exception e) {
+      System.err.println(
+          "ERROR: Could not process Public Key, please check pre-configured publicKeyPath.");
+      e.printStackTrace();
+    }
+
     // Start up and configure the web server
     port(port);
     threadPool(maxThreads, minThreads, timeOutMillis);
 
+    PublicKey finalPublicKey = publicKey;
     path("/", () -> {
-      get("/*", StarlingMessageSignatureValidator::processRequest);
+      get("/*", (request, response) -> processRequest(request, response, finalPublicKey));
 
-      post("/*", StarlingMessageSignatureValidator::processRequest);
+      post("/*", (request, response) -> processRequest(request, response, finalPublicKey));
 
-      put("/*", StarlingMessageSignatureValidator::processRequest);
+      put("/*", (request, response) -> processRequest(request, response, finalPublicKey));
     });
 
     awaitInitialization(); // Wait for server to be initialized
@@ -71,7 +98,7 @@ public class StarlingMessageSignatureValidator {
     System.out.println("Server listening on: http://localhost:" + port + "/");
   }
 
-  public static String processRequest(Request request, Response response)
+  private static String processRequest(Request request, Response response, PublicKey publicKey)
       throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
     List<String> responseBody = new ArrayList<>();
 
@@ -135,14 +162,9 @@ public class StarlingMessageSignatureValidator {
       }
     }
 
-    responseBody.add("Looking for publicKey file in:");
-    responseBody.add(new File(publicKeyPath).getAbsolutePath() + "\n");
-    System.out.println("Looking for publicKey file in:");
-    System.out.println(new File(publicKeyPath).getAbsolutePath() + "\n");
-
     // Carry out the primary validation checks.
     String validationChecks = Joiner.on("\n")
-        .join(isValid(publicKeyPath, algorithm, signingString, signature));
+        .join(isValid(publicKey, algorithm, signingString, signature));
 
     String responseString = Joiner.on("\n").join(responseBody);
     response.type("text/xml");
@@ -150,7 +172,7 @@ public class StarlingMessageSignatureValidator {
     return Joiner.on("\n").join(responseString, validationChecks);
   }
 
-  public static List<String> isValid(String publicKeyPath, String algorithm, String headers,
+  public static List<String> isValid(PublicKey publicKey, String algorithm, String headers,
       String signature)
       throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
     List<String> verificationChecks = new ArrayList<>();
@@ -164,25 +186,6 @@ public class StarlingMessageSignatureValidator {
       halt(400,
           "ERROR: Unsupported signing algorithm, " + algorithm + ". Expected one of: " + Arrays
               .toString(ACCEPTED_ALGORITHMS));
-    }
-
-    // Prep Public Key from File Path - Note that this step is for the purposes of this tool and otherwise rely on the supplied keyid for retrieval.
-    PublicKey publicKey = null;
-    try {
-      byte[] publicKeyBytes = FileUtils.readFileToByteArray(new File(publicKeyPath));
-      String publicKeyContent = new String(publicKeyBytes)
-          .replaceAll("\\n", "")
-          .replace("-----BEGIN PUBLIC KEY-----", "")
-          .replace("-----END PUBLIC KEY-----", "");
-      EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
-          Base64.getMimeDecoder().decode(publicKeyContent));
-      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-      publicKey = keyFactory.generatePublic(publicKeySpec);
-    } catch (Exception e) {
-      System.err.println(
-          "ERROR: Could not process Public Key, please check pre-configured publicKeyPath.");
-      e.printStackTrace();
-      halt(400, "ERROR: Could not process Public Key, please check pre-configured publicKeyPath.");
     }
 
     // Prep Signature object using publicKey and headers
