@@ -1,6 +1,6 @@
 # express
 
-Verifies the webhook signature in the `express.json()` middleware's `verify` function. Uses the `express` library.
+Verifies the webhook signature while using the `express` library.
 
 ## Setup
 

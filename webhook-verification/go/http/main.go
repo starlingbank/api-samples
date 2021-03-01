@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha512"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +29,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	hash.Write(data)
 	calculatedSignature := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
-	if calculatedSignature != r.Header.Get("X-Hook-Signature") {
+	if subtle.ConstantTimeCompare([]byte(calculatedSignature), []byte(r.Header.Get("X-Hook-Signature"))) == 0 {
 		fmt.Printf("Bad webhook signature. Expected %s but was %s\n", calculatedSignature, r.Header.Get("X-Hook-Signature"))
 		http.Error(w, "Bad webhook signature", 403)
 		return
@@ -39,6 +40,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", handleWebhook)
+	fmt.Printf("Staring on port 8000...\n")
 	if err := http.ListenAndServe(":8000", nil); err != nil {
 		log.Fatal(err)
 	}
