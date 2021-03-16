@@ -5,7 +5,8 @@ const fs = require('fs');
 const baseURL = 'https://payment-api-sandbox.starlingbank.com';
 const privateKeyPath = 'starling-api-private.key';
 const apiKeyUid = 'KEY_UID';
-const paymentBusinessUid = 'ACCOUNT_UID-2c52-4150-a3c1-614de3db9483';
+const paymentBusinessUid = 'PAYMENT_BUSINESS_UID';
+const accountUid = 'ACCOUNT_UID';
 const date = (new Date()).toISOString();
 const url = `/api/v1/${paymentBusinessUid}/account/${accountUid}`;
 const method = 'get';
@@ -18,6 +19,7 @@ const signature = crypto
 
 const authorization = `Signature keyid="${apiKeyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`;
 
+console.log(baseURL + url);
 axios.request({
     baseURL,
     url,

@@ -6,10 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "saffaanh.soobratty@starlingbank.com",
+  "author": "Saffaanh Soobratty <saffaanh.soobratty@starlingbank.com>",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.1",
-    "crypto": "^1.0.1"
+    "axios": "^0.21.1"
   }
 }
