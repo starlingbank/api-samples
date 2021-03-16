@@ -19,6 +19,7 @@ const signature = crypto
 
 const authorization = `Signature keyid="${apiKeyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`;
 
+console.log(baseURL + url);
 axios.request({
     baseURL,
     url,
