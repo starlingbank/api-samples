@@ -11,17 +11,15 @@ namespace ps_signing_sample
     {
         // TODO: Replace values with your own... 
         private const string PrivateKeyFilePath = "starling-api-private.key"; // path to private.key
-        private static readonly Guid ApiKeyGuid = new("50262dcf-52de-4985-a65e-c58428d20c0c");
-        private static readonly Guid PaymentBusinessGuid = new("57465e4f-7fcb-492c-b775-a82b77294b26");
-        private static readonly Guid AccountGuid = new("c50e9489-ce60-4cbe-9f23-f295d00869d4");
-        
+        private const string SortCode = "SORT_CODE";
+        private const string ExampleAccountName = "EXAMPLE_ACCOUNT_NAME";
+        private static readonly Guid ApiKeyGuid = new("API_KEY_GUID");
+        private static readonly Guid PaymentBusinessGuid = new("PAYMENT_BUSINESS_GUID");
+        private static readonly Guid AccountGuid = new("ACCOUNT_GUID");
+
         private const int KeySizeBits = 4096;
         private const string BaseUrl = "https://payment-api-sandbox.starlingbank.com"; // sandbox url
         private const string AuthHeaderTemplate = "Signature keyid=\"{0}\",algorithm=\"rsa-sha512\",headers=\"(request-target) Date Digest\",signature=\"{1}\"";
-        
-        // PUT Example Data
-        private const string SortCode = "040059";
-        private const string ExampleAccountName = "Example Account Name";
         private const string JsonMediaType = "application/json";
 
         private static readonly HttpClient Client = new()
@@ -148,7 +146,7 @@ namespace ps_signing_sample
             }
             catch (IOException)
             {
-                Console.WriteLine($"Unable to local private key file '{privateKeyFilePath}'. Verify the file exists.");
+                Console.WriteLine($"Unable to locate private key file '{privateKeyFilePath}'. Verify the file exists.");
                 rsa.Dispose();
                 return null;
             }
