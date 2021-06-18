@@ -1,4 +1,4 @@
-# 📖 Starling Bank Common Samples
+# Starling Bank common samples
 
 This folder contains code samples that are common to our Public APIs and our Payment Services APIs.
 

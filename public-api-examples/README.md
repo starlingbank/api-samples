@@ -1,4 +1,4 @@
-# 📖 Starling Bank Public API Samples
+# Starling Bank Public API Samples
 
 This folder contains code samples for our Public APIs.
 

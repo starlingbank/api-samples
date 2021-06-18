@@ -1,5 +1,7 @@
-# 🔄 Starling key rotation samples
+# Starling key rotation samples
 
-These demonstrate how to rotate API keys using the rotation key for the Starling Bank API.
+These samples show you how to use your rotation key to rotate your API keys.
 
-For more information on key rotation, and the API in general, see the documentation on the [developer portal](https://developer.starlingbank.com/docs).
+These samples are common to both our Public APIs and our Payment Service APIs.
+
+You can read more about rotating keys in our [Public API documentation](https://developer.starlingbank.com/docs) and our [Payment Service API documentation](https://developer.starlingbank.com/payments/docs).

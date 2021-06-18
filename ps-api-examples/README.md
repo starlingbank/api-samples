@@ -1,4 +1,4 @@
-# 📖 Starling Bank Payment Services Samples
+# Starling Bank Payment Services API samples
 
 This folder contains code samples for our Payment Services APIs.
 
