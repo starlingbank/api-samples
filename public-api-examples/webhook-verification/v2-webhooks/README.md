@@ -1,4 +1,4 @@
-# 🛃 Starling webhook verification samples
+# Starling webhook verification samples
 
 These demonstrate how to verify the `X-Hook-Signature` header on Starling Bank webhooks.
 
