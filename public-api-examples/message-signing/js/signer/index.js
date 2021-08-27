@@ -29,8 +29,9 @@ const calculateAuthorisationAndDigest = (method, url, data) => {
   };
 };
 
-const makeRequest = ({ url, method, authorization, digest, data = '' }) =>
-  axios
+const makeRequest = ({ url, method, authorization, digest, data = '' }) => {
+  console.log(`Request to: ${url}`);
+  return axios
     .request({
       baseURL,
       url,
@@ -44,18 +45,17 @@ const makeRequest = ({ url, method, authorization, digest, data = '' }) =>
         'User-Agent': 'api-samples/message-signing/js/signer'
       }
     })
-    .then((response) => console.log(response.data))
-    .catch((err) => {
-      console.error(`Status code: ${err.request.res.statusCode}`);
-      console.error(`Status message: ${err.request.res.statusMessage}`);
-      console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+    .then((response) => {
+      console.log(`Status code: ${response.status}`);
+      console.log(response.data);
     });
+};
 
 const registerPerson = (personOnboardingUid) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}`;
   const data = {
-    mobileNumber: '+447812345678',
+    mobileNumber: '+447822699911',
     title: 'MISS',
     preferredName: 'Bob',
     firstName: 'Gytha',
@@ -129,6 +129,12 @@ const generateUrl = (personOnboardingUid) => {
 
 const personOnboardingUid = uuid();
 
-registerPerson(personOnboardingUid).then(() =>
-  generateUrl(personOnboardingUid)
-);
+registerPerson(personOnboardingUid)
+  .then(() =>
+    generateUrl(personOnboardingUid)
+  )
+  .catch((err) => {
+    console.error(`Status code: ${err.response.status}`);
+    console.error(`Status message: ${err.response.statusText}`);
+    console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+  });
