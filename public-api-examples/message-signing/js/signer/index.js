@@ -3,57 +3,132 @@ const crypto = require('crypto');
 const fs = require('fs');
 const uuid = require('uuid').v4;
 
-// Configuration. Don't hardcode these in production
 const keyUid = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
-const accessToken = 'eyJhbGciOiJQUzI1NiIsInppcCI6I...';
-const accountUid = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
-const categoryUid = 'cccccccc-cccc-4ccc-cccc-cccccccccccc';
-
 const baseURL = 'https://api-sandbox.starlingbank.com';
-const method = 'put';
-const url = `/api/v2/payments/local/account/${accountUid}/category/${categoryUid}`;
-const date = (new Date()).toISOString();
-const data = JSON.stringify({
-  externalIdentifier: uuid(),
-  paymentRecipient: {
-    payeeName: "Elise Gram",
-    payeeType: "INDIVIDUAL",
-    countryCode: "GB",
-    accountIdentifier: "96193830",
-    bankIdentifier: "608371",
-    bankIdentifierType: "SORT_CODE"
-  },
-  reference: "From api-samples",
-  amount: {
-    currency: "GBP",
-    minorUnits: 1
-  }
-});
+const date = new Date().toISOString();
 
-const digest = crypto
-  .createHash('sha512')
-  .update(data)
-  .digest('base64');
+const calculateAuthorisationAndDigest = (method, url, data) => {
+  const digest =
+    data === ''
+      ? ''
+      : crypto
+          .createHash('sha512')
+          .update(JSON.stringify(data))
+          .digest('base64');
 
-const signature = crypto
-  .createSign('RSA-SHA512')
-  .update(`(request-target): put ${url}\nDate: ${date}\nDigest: ${digest}`)
-  .sign(fs.readFileSync('starling-api-private.key'), 'base64');
+  const signature = crypto
+    .createSign('RSA-SHA512')
+    .update(
+      `(request-target): ${method} ${url}\nDate: ${date}\nDigest: ${digest}`
+    )
+    .sign(fs.readFileSync('starling-api-private.key'), 'base64');
 
-const authorization = `Bearer ${accessToken};Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`
+  return {
+    digest,
+    authorization: `Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`
+  };
+};
 
-axios.request({
-  baseURL,
-  url,
-  method,
-  data,
-  headers: {
-    Authorization: authorization,
-    Date: date,
-    Digest: digest,
-    'Content-Type': 'application/json',
-    'User-Agent': 'api-samples/message-signing/js/signer'
-  }
-})
-.then(response => console.log(response))
-.catch(err => console.error(err.response.data))
+const makeRequest = ({ url, method, authorization, digest, data = '' }) =>
+  axios
+    .request({
+      baseURL,
+      url,
+      method,
+      data,
+      headers: {
+        Authorization: authorization,
+        Date: date,
+        Digest: digest,
+        'Content-Type': 'application/json',
+        'User-Agent': 'api-samples/message-signing/js/signer'
+      }
+    })
+    .then((response) => console.log(response.data))
+    .catch((err) => {
+      console.error(`Status code: ${err.request.res.statusCode}`);
+      console.error(`Status message: ${err.request.res.statusMessage}`);
+      console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+    });
+
+const registerPerson = (personOnboardingUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}`;
+  const data = {
+    mobileNumber: '+447812345678',
+    title: 'MISS',
+    preferredName: 'Bob',
+    firstName: 'Gytha',
+    middleName: 'Courtney',
+    lastName: 'Ogg',
+    dateOfBirth: '2000-12-30',
+    email: 'gytha.ogg@example.com',
+    currentAddress: {
+      line1: 'Flat 101',
+      line2: 'Hudson House',
+      line3: '4 Yeo Street',
+      subBuildingName: 'Flat 101',
+      buildingName: 'Hudson House',
+      buildingNumber: '4',
+      thoroughfare: 'Yeo Street',
+      dependantLocality: 'Langdon Park',
+      postTown: 'London',
+      postCode: 'E3 3NU',
+      countryCode: 'GB',
+      udprn: '52379171',
+      umprn: '1234567890',
+      from: '2018-01-01',
+      to: '2018-01-02'
+    },
+    previousAddresses: [
+      {
+        line1: 'Flat 101',
+        line2: 'Hudson House',
+        line3: '4 Yeo Street',
+        subBuildingName: 'Flat 101',
+        buildingName: 'Hudson House',
+        buildingNumber: '4',
+        thoroughfare: 'Yeo Street',
+        dependantLocality: 'Langdon Park',
+        postTown: 'London',
+        postCode: 'E3 3NU',
+        countryCode: 'GB',
+        udprn: '52379171',
+        umprn: '1234567890',
+        from: '2018-01-01',
+        to: '2018-01-02'
+      }
+    ]
+  };
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+};
+
+const generateUrl = (personOnboardingUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/upload-url`;
+  const data = {
+    contentType: 'image/png',
+    contentMd5: 'Qlu5/ZIObKCQNx4xyMUI+w=='
+  };
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+};
+
+const personOnboardingUid = uuid();
+
+registerPerson(personOnboardingUid).then(() =>
+  generateUrl(personOnboardingUid)
+);
