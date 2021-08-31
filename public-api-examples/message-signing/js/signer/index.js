@@ -51,11 +51,11 @@ const makeRequest = ({ url, method, authorization, digest, data = '' }) => {
     });
 };
 
-const registerPerson = async (personOnboardingUid) => {
+const registerPerson = (personOnboardingUid, mobileNumber) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}`;
   const data = {
-    mobileNumber: '+447112691111',
+    mobileNumber: mobileNumber,
     title: 'MISS',
     preferredName: 'Bob',
     firstName: 'Gytha',
@@ -127,10 +127,47 @@ const generateUrl = async (personOnboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
+const confirmDocUploaded = (personOnboardingUid, documentUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/${documentUid}/confirm-upload`
+  const data = {
+    documentType: 'ID_PHOTO_FRONT',
+    photoIdType: 'FULL_DRIVING_LICENSE',
+    filename: 'license.png'
+  }
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+}
+
+const personOnboardingUid = uuid();
+const documentUid = uuid();
+const mobileNumber = '+447822699915';
+
+registerPerson(personOnboardingUid, mobileNumber)
+  .then(() => {
+    const generateUrlRes = generateUrl(personOnboardingUid);
+    documentUid = generateUrlRes.response.documentUid;
+  })
+  .then(() => {
+    console.log(documentUid);
+    // confirmDocUploaded(personOnboardingUid, documentUid);
+  })
+  .catch((err) => {
+    console.error(`Status code: ${err.response.status}`);
+    console.error(`Status message: ${err.response.statusText}`);
+    console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+  })
+
 const onboard = async () => {
   const personOnboardingUid = uuid();
   try {
-    await registerPerson(personOnboardingUid);
+    await registerPerson(personOnboardingUid, mobileNumber);
     await generateUrl(personOnboardingUid);
   } catch (err) {
     console.error(`Status code: ${err.response.status}`);
