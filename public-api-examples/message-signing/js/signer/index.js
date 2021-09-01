@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const uuid = require('uuid').v4;
 
-const keyUid = 'aaa-bbb';
+const keyUid = 'PUT_UID_HERE';
 const baseURL = 'https://api-sandbox.starlingbank.com';
 const date = new Date().toISOString();
 
@@ -42,7 +42,7 @@ const makeRequest = ({ url, method, authorization, digest, data = '' }) => {
         Date: date,
         Digest: digest,
         'Content-Type': 'application/json',
-        'User-Agent': 'api-samples/message-signing/js/signer'
+        'User-Agent': 'veronica-lee/baas-testing'
       }
     })
     .then((response) => {
@@ -129,12 +129,12 @@ const generateUrl = async (personOnboardingUid) => {
 
 const confirmDocUploaded = (personOnboardingUid, documentUid) => {
   const method = 'put';
-  const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/${documentUid}/confirm-upload`
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/${documentUid}/confirm-upload`;
   const data = {
     documentType: 'ID_PHOTO_FRONT',
     photoIdType: 'FULL_DRIVING_LICENSE',
     filename: 'license.png'
-  }
+  };
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
     method,
@@ -145,20 +145,122 @@ const confirmDocUploaded = (personOnboardingUid, documentUid) => {
   return makeRequest({ url, method, authorization, digest, data });
 }
 
-const personOnboardingUid = uuid();
-const documentUid = uuid();
-const mobileNumber = '+447822699915';
+const generateVerificationPhrase = (personOnboardingUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/videos/phrases`;
+  const data = {};
 
-registerPerson(personOnboardingUid, mobileNumber)
-  .then(() => {
-    const generateUrlRes = generateUrl(personOnboardingUid);
-    documentUid = generateUrlRes.response.documentUid;
-  })
-  .then(() => {
-    console.log(documentUid);
-    // confirmDocUploaded(personOnboardingUid, documentUid);
-  })
-  .catch((err) => {
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+}
+
+const getIncomeBands = (personOnboardingUid) => {
+  const method = 'get';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/income-bands`;
+  const data = {};
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+}
+
+const fetchOutstandingTerms = (personOnboardingUid) => {
+  const method = 'get';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/person-terms/outstanding`;
+  const data = {};
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+}
+
+const acceptTermsAndRequestReview = (personOnboardingUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/accept-terms`;
+  const data = {
+    acceptedTerms: [
+      { termDocumentName: 'GeneralTerms', version: 5 },
+      { termDocumentName: 'PersonalSchedule', version: 4 },
+      { termDocumentName: 'FinancialCompensationSchemeInformation', version: 3 },
+      { termDocumentName: 'FeesAndLimits', version: 11 },
+      { termDocumentName: 'StarlingBankPrivacyPolicy', version: 7 }
+    ],
+    personIncomeDeclaration: {
+      incomeBand: 'LESS_THAN_15000',
+      currencyCode: 'GBP',
+      sourcesOfFunds: [
+        'BENEFITS'
+      ]
+    }
+  };
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+}
+
+const fetchOutstandingActions = () => {
+  const method = 'get';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/actions`;
+  const data = {};
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return makeRequest({ url, method, authorization, digest, data });
+}
+
+// const personOnboardingUid = uuid();
+// const mobileNumber = '+447822699927';
+
+// registerPerson(personOnboardingUid, mobileNumber)
+//   .then(() => {
+//     const generateUrlRes = generateUrl(personOnboardingUid);
+//     console.log("DocumentUid: " + generateUrlRes.response.idvDocumentUid);
+//   })
+//   .catch((err) => {
+//     console.error(`Status code: ${err.response.status}`);
+//     console.error(`Status message: ${err.response.statusText}`);
+//     console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+//   });
+
+  const personOnboardingUid = '8424f9dd-2399-40ed-8691-57720745d8bd';
+  const documentUid = 'ae248f6a-230e-497b-8b3a-3aa437c7908a';
+
+  // confirmDocUploaded(personOnboardingUid, documentUid)
+  // .catch((err) => {
+  //   console.error(`Status code: ${err.response.status}`);
+  //   console.error(`Status message: ${err.response.statusText}`);
+  // });
+
+  // generateVerificationPhrase(personOnboardingUid)
+  // .catch((err) => {
+  //   console.error(`Status code: ${err.response.status}`);
+  //   console.error(`Status message: ${err.response.statusText}`);
+  // });
+
+  acceptTermsAndRequestReview(personOnboardingUid)
+    .catch((err) => {
     console.error(`Status code: ${err.response.status}`);
     console.error(`Status message: ${err.response.statusText}`);
     console.error(`Response data: ${JSON.stringify(err.response.data)}`);
