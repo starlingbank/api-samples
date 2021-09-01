@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const uuid = require('uuid').v4;
 
-const keyUid = 'cd92f34d-e88b-4f41-af7a-9770bd71bac1';
+const keyUid = 'aa-bb-cc';
 const baseURL = 'https://api-sandbox.starlingbank.com';
 const date = new Date().toISOString();
 
@@ -30,6 +30,7 @@ const calculateAuthorisationAndDigest = (method, url, data) => {
 };
 
 const makeRequest = async ({ url, method, authorization, digest, data = '' }) => {
+  console.log('-------------------');
   console.log(`Request to: ${url}`);
   const response = await axios
     .request({
@@ -109,12 +110,12 @@ const registerPerson = async (personOnboardingUid, mobileNumber) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const generateUrl = async (personOnboardingUid) => {
+const generateUrl = async (personOnboardingUid, contentMd5, contentType) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/upload-url`;
   const data = {
-    contentType: 'image/png',
-    contentMd5: 'bqZVYjU0gYnPeDsOh2bsCw=='
+    contentType,
+    contentMd5
   };
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -126,10 +127,14 @@ const generateUrl = async (personOnboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const uploadImageToS3 = async (presignedUrl) => {
-  const md5 = 'bqZVYjU0gYnPeDsOh2bsCw==';
+const uploadImageToS3 = async (presignedUrl, contentMd5) => {
   const imageFile = fs.readFileSync('image.png');
-  return await axios.request({ url: presignedUrl, method: 'PUT', data: imageFile, headers: { 'Content-Type':  'image/png', 'Content-MD5': md5 } })
+  return await axios.request({ url: presignedUrl, method: 'PUT', data: imageFile, headers: { 'Content-Type':  'image/png', 'Content-MD5': contentMd5 } })
+};
+
+const uploadVideoToS3 = async (presignedUrl, contentMd5) => {
+  const video = fs.readFileSync('video.mp4');
+  return await axios.request({ url: presignedUrl, method: 'PUT', data: video, headers: { 'Content-Type':  'video/mp4', 'Content-MD5': contentMd5 } })
 };
 
 const confirmDocUploaded = async (personOnboardingUid, documentUid) => {
@@ -139,6 +144,23 @@ const confirmDocUploaded = async (personOnboardingUid, documentUid) => {
     documentType: 'ID_PHOTO_FRONT',
     photoIdType: 'FULL_DRIVING_LICENSE',
     filename: 'license.png'
+  };
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
+}
+
+const confirmVideoUploaded = async (personOnboardingUid, documentUid, phraseUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/videos/phrases/${phraseUid}/confirm-upload`;
+  const data = {
+    videoUid: documentUid,
+    filename: 'video.mp4'
   };
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -164,7 +186,7 @@ const generateVerificationPhrase = async (personOnboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 }
 
-const getIncomeBands = (personOnboardingUid) => {
+const getIncomeBands = async (personOnboardingUid) => {
   const method = 'get';
   const url = `/api/v2/onboard/people/${personOnboardingUid}/income-bands`;
   const data = {};
@@ -175,12 +197,12 @@ const getIncomeBands = (personOnboardingUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 }
 
-const fetchOutstandingTerms = (personOnboardingUid) => {
+const fetchOutstandingTerms = async (personOnboardingUid) => {
   const method = 'get';
-  const url = `/api/v2/onboard/people/${personOnboardingUid}/person-terms/outstanding`;
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/person-terms`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -189,12 +211,12 @@ const fetchOutstandingTerms = (personOnboardingUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 }
 
-const acceptTermsAndRequestReview = (personOnboardingUid) => {
+const submitApplication = async (personOnboardingUid) => {
   const method = 'put';
-  const url = `/api/v2/onboard/people/${personOnboardingUid}/accept-terms`;
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/submission`;
   const data = {
     acceptedTerms: [
       { termDocumentName: 'GeneralTerms', version: 5 },
@@ -218,12 +240,12 @@ const acceptTermsAndRequestReview = (personOnboardingUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 }
 
-const fetchOutstandingActions = () => {
+const fetchOutstandingActions = async (personOnboardingUid) => {
   const method = 'get';
-  const url = `/api/v2/onboard/people/${personOnboardingUid}/actions`;
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/status`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -232,17 +254,43 @@ const fetchOutstandingActions = () => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
+}
+
+const resubmit = async (personOnboardingUid) => {
+  const method = 'put';
+  const url = `/api/v2/onboard/people/${personOnboardingUid}/re-submission`;
+  const data = {};
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
 }
 
 const onboard = async () => {
-  const personOnboardingUid = '8424f9dd-2399-40ed-8691-57720745d8bd';
+  const personOnboardingUid = uuid();
+  const mobileNumber = '07122217511';
+  const imageMd5 = 'bqZVYjU0gYnPeDsOh2bsCw==';
+  const videoMd5 = '1B2M2Y8AsgTpgAmY7PhCfg==';
   try {
-    // await registerPerson(personOnboardingUid, mobileNumber);
-    const urlResponse = await generateUrl(personOnboardingUid);
-    await uploadImageToS3(urlResponse.data.url);
-    await confirmDocUploaded(personOnboardingUid, urlResponse.data.idvDocumentUid);
-    const phraseResponse = await generateVerificationPhrase(personOnboardingUid);
+    await registerPerson(personOnboardingUid, mobileNumber); // Create person
+    const urlResponse = await generateUrl(personOnboardingUid, imageMd5, 'image/png'); // Generate document upload url
+    await uploadImageToS3(urlResponse.data.url, imageMd5); // Upload image to s3
+    await confirmDocUploaded(personOnboardingUid, urlResponse.data.idvDocumentUid); // Confirm document upload
+    const phraseResponse = await generateVerificationPhrase(personOnboardingUid); // Generate video phrase
+    const videoUrlResponse = await generateUrl(personOnboardingUid, videoMd5, 'video/mp4'); // Generate video upload url
+    await uploadVideoToS3(videoUrlResponse.data.url, videoMd5); // Upload video to s3
+    await confirmVideoUploaded(personOnboardingUid, videoUrlResponse.data.idvDocumentUid, phraseResponse.data.phraseUid); // Confirm video uploaded
+    await fetchOutstandingActions(personOnboardingUid); // Fetch outstanding actions
+    await getIncomeBands(personOnboardingUid); // Get income bands
+    await fetchOutstandingTerms(personOnboardingUid) // Fetch outstanding terms
+    await submitApplication(personOnboardingUid); // Accept terms and submit application
+    // await resubmit(personOnboardingUid);
+
   } catch (err) {
     if (err.response) {
       console.error(`Status code: ${err.response.status}`);
