@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const uuid = require('uuid').v4;
 
-const keyUid = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
+const keyUid = 'aaa-bbb';
 const baseURL = 'https://api-sandbox.starlingbank.com';
 const date = new Date().toISOString();
 
@@ -51,11 +51,11 @@ const makeRequest = ({ url, method, authorization, digest, data = '' }) => {
     });
 };
 
-const registerPerson = (personOnboardingUid) => {
+const registerPerson = async (personOnboardingUid) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}`;
   const data = {
-    mobileNumber: '+447822699911',
+    mobileNumber: '+447112691111',
     title: 'MISS',
     preferredName: 'Bob',
     firstName: 'Gytha',
@@ -107,10 +107,10 @@ const registerPerson = (personOnboardingUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const generateUrl = (personOnboardingUid) => {
+const generateUrl = async (personOnboardingUid) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/upload-url`;
   const data = {
@@ -124,17 +124,19 @@ const generateUrl = (personOnboardingUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const personOnboardingUid = uuid();
-
-registerPerson(personOnboardingUid)
-  .then(() =>
-    generateUrl(personOnboardingUid)
-  )
-  .catch((err) => {
+const onboard = async () => {
+  const personOnboardingUid = uuid();
+  try {
+    await registerPerson(personOnboardingUid);
+    await generateUrl(personOnboardingUid);
+  } catch (err) {
     console.error(`Status code: ${err.response.status}`);
     console.error(`Status message: ${err.response.statusText}`);
     console.error(`Response data: ${JSON.stringify(err.response.data)}`);
-  });
+  }
+}
+
+onboard();
