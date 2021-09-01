@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const uuid = require('uuid').v4;
 
-const keyUid = 'PUT_UID_HERE';
+const keyUid = 'cd92f34d-e88b-4f41-af7a-9770bd71bac1';
 const baseURL = 'https://api-sandbox.starlingbank.com';
 const date = new Date().toISOString();
 
@@ -29,9 +29,9 @@ const calculateAuthorisationAndDigest = (method, url, data) => {
   };
 };
 
-const makeRequest = ({ url, method, authorization, digest, data = '' }) => {
+const makeRequest = async ({ url, method, authorization, digest, data = '' }) => {
   console.log(`Request to: ${url}`);
-  return axios
+  const response = await axios
     .request({
       baseURL,
       url,
@@ -44,14 +44,13 @@ const makeRequest = ({ url, method, authorization, digest, data = '' }) => {
         'Content-Type': 'application/json',
         'User-Agent': 'veronica-lee/baas-testing'
       }
-    })
-    .then((response) => {
-      console.log(`Status code: ${response.status}`);
-      console.log(response.data);
     });
+  console.log(`Status code: ${response.status}`);
+  console.log(response.data);
+  return response;
 };
 
-const registerPerson = (personOnboardingUid, mobileNumber) => {
+const registerPerson = async (personOnboardingUid, mobileNumber) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}`;
   const data = {
@@ -115,7 +114,7 @@ const generateUrl = async (personOnboardingUid) => {
   const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/upload-url`;
   const data = {
     contentType: 'image/png',
-    contentMd5: 'Qlu5/ZIObKCQNx4xyMUI+w=='
+    contentMd5: 'bqZVYjU0gYnPeDsOh2bsCw=='
   };
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -127,7 +126,13 @@ const generateUrl = async (personOnboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const confirmDocUploaded = (personOnboardingUid, documentUid) => {
+const uploadImageToS3 = async (presignedUrl) => {
+  const md5 = 'bqZVYjU0gYnPeDsOh2bsCw==';
+  const imageFile = fs.readFileSync('image.png');
+  return await axios.request({ url: presignedUrl, method: 'PUT', data: imageFile, headers: { 'Content-Type':  'image/png', 'Content-MD5': md5 } })
+};
+
+const confirmDocUploaded = async (personOnboardingUid, documentUid) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}/documents/${documentUid}/confirm-upload`;
   const data = {
@@ -142,10 +147,10 @@ const confirmDocUploaded = (personOnboardingUid, documentUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 }
 
-const generateVerificationPhrase = (personOnboardingUid) => {
+const generateVerificationPhrase = async (personOnboardingUid) => {
   const method = 'put';
   const url = `/api/v2/onboard/people/${personOnboardingUid}/videos/phrases`;
   const data = {};
@@ -156,7 +161,7 @@ const generateVerificationPhrase = (personOnboardingUid) => {
     data
   );
 
-  return makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, data });
 }
 
 const getIncomeBands = (personOnboardingUid) => {
@@ -230,51 +235,22 @@ const fetchOutstandingActions = () => {
   return makeRequest({ url, method, authorization, digest, data });
 }
 
-// const personOnboardingUid = uuid();
-// const mobileNumber = '+447822699927';
-
-// registerPerson(personOnboardingUid, mobileNumber)
-//   .then(() => {
-//     const generateUrlRes = generateUrl(personOnboardingUid);
-//     console.log("DocumentUid: " + generateUrlRes.response.idvDocumentUid);
-//   })
-//   .catch((err) => {
-//     console.error(`Status code: ${err.response.status}`);
-//     console.error(`Status message: ${err.response.statusText}`);
-//     console.error(`Response data: ${JSON.stringify(err.response.data)}`);
-//   });
-
-  const personOnboardingUid = '8424f9dd-2399-40ed-8691-57720745d8bd';
-  const documentUid = 'ae248f6a-230e-497b-8b3a-3aa437c7908a';
-
-  // confirmDocUploaded(personOnboardingUid, documentUid)
-  // .catch((err) => {
-  //   console.error(`Status code: ${err.response.status}`);
-  //   console.error(`Status message: ${err.response.statusText}`);
-  // });
-
-  // generateVerificationPhrase(personOnboardingUid)
-  // .catch((err) => {
-  //   console.error(`Status code: ${err.response.status}`);
-  //   console.error(`Status message: ${err.response.statusText}`);
-  // });
-
-  acceptTermsAndRequestReview(personOnboardingUid)
-    .catch((err) => {
-    console.error(`Status code: ${err.response.status}`);
-    console.error(`Status message: ${err.response.statusText}`);
-    console.error(`Response data: ${JSON.stringify(err.response.data)}`);
-  })
-
 const onboard = async () => {
-  const personOnboardingUid = uuid();
+  const personOnboardingUid = '8424f9dd-2399-40ed-8691-57720745d8bd';
   try {
-    await registerPerson(personOnboardingUid, mobileNumber);
-    await generateUrl(personOnboardingUid);
+    // await registerPerson(personOnboardingUid, mobileNumber);
+    const urlResponse = await generateUrl(personOnboardingUid);
+    await uploadImageToS3(urlResponse.data.url);
+    await confirmDocUploaded(personOnboardingUid, urlResponse.data.idvDocumentUid);
+    const phraseResponse = await generateVerificationPhrase(personOnboardingUid);
   } catch (err) {
-    console.error(`Status code: ${err.response.status}`);
-    console.error(`Status message: ${err.response.statusText}`);
-    console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+    if (err.response) {
+      console.error(`Status code: ${err.response.status}`);
+      console.error(`Status message: ${err.response.statusText}`);
+      console.error(`Response data: ${JSON.stringify(err.response.data)}`);
+    } else {
+      console.error(`Error: ${err}`);
+    }
   }
 }
 
