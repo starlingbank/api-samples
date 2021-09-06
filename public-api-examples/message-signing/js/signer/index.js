@@ -43,7 +43,7 @@ const makeRequest = async ({ url, method, authorization, digest, data = '' }) =>
         Date: date,
         Digest: digest,
         'Content-Type': 'application/json',
-        'User-Agent': 'veronica-lee/baas-testing'
+        'User-Agent': 'baas-testing'
       }
     });
   console.log(`Status code: ${response.status}`);
