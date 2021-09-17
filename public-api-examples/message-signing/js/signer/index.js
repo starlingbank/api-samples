@@ -459,6 +459,10 @@ const onboard = async (mobileNumber) => {
     await sendIncomeAndEmploymentDetails(onboardingUid);
 
     await submitApplication(onboardingUid);
+
+    console.log("Onboarding application complete")
+    console.log(`Mobile number: ${mobileNumber}`)
+    console.log(`Onboarding uid: ${onboardingUid}`)
     return onboardingUid;
   } catch (err) {
     if (err.response) {
@@ -473,10 +477,7 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   const mobileNumber = '07411218835';
-  const onboardingUid = await onboard(mobileNumber);
-  console.log("Onboarding application complete")
-  console.log(`Mobile number: ${mobileNumber}`)
-  console.log(`Onboarding uid: ${onboardingUid}`)
+  await onboard(mobileNumber);
 
   // await createAccountHolder(onboardingUid);
 }
