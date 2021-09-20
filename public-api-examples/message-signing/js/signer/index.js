@@ -29,6 +29,33 @@ const calculateAuthorisationAndDigest = (method, url, data) => {
   };
 };
 
+const calculateOAuthAuthorisationAndDigest = (
+  method,
+  url,
+  data,
+  accessToken
+) => {
+  const digest =
+    data === ''
+      ? ''
+      : crypto
+          .createHash('sha512')
+          .update(JSON.stringify(data))
+          .digest('base64');
+
+  const signature = crypto
+    .createSign('RSA-SHA512')
+    .update(
+      `(request-target): ${method} ${url}\nDate: ${date}\nDigest: ${digest}`
+    )
+    .sign(fs.readFileSync('starling-api-private.key'), 'base64');
+
+  return {
+    digest,
+    authorization: `Bearer ${accessToken};Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`
+  };
+};
+
 const makeRequest = async ({
   url,
   method,
@@ -420,50 +447,94 @@ const createAccountHolder = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
+const getAccounts = async (accessToken) => {
+  const method = 'get';
+  const url = `/api/v2/accounts`;
+  const data = {};
+
+  const { digest, authorization } = calculateOAuthAuthorisationAndDigest(
+    method,
+    url,
+    data,
+    accessToken
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
+};
+
+const getAccountHolderName = async (accessToken) => {
+  const method = 'get';
+  const url = `/api/v2/account-holder/name`;
+  const data = {};
+
+  const { digest, authorization } = calculateOAuthAuthorisationAndDigest(
+    method,
+    url,
+    data,
+    accessToken
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
+};
+
 const onboard = async (mobileNumber) => {
   const imageMd5 = 'bqZVYjU0gYnPeDsOh2bsCw==';
   const videoMd5 = '1B2M2Y8AsgTpgAmY7PhCfg==';
+
+  const {
+    data: { onboardingUid }
+  } = await createPerson(mobileNumber);
+  const { data: photoUrlData } = await generateDocumentUploadUrl(
+    onboardingUid,
+    imageMd5,
+    'image/png'
+  );
+  await uploadImageToS3(photoUrlData.url, imageMd5);
+  await confirmDocUploaded(onboardingUid, photoUrlData.identityUploadUid);
+  const {
+    data: { phraseUid }
+  } = await generateVideoVerificationPhrase(onboardingUid);
+  const { data: videoUrlData } = await generateDocumentUploadUrl(
+    onboardingUid,
+    videoMd5,
+    'video/mp4'
+  );
+  await uploadVideoToS3(videoUrlData.url, videoMd5);
+  await confirmVideoUploaded(
+    onboardingUid,
+    videoUrlData.identityUploadUid,
+    phraseUid
+  );
+  await fetchOutstandingActions(onboardingUid);
+  await getIncomeBands(onboardingUid);
+  await fetchTerms(onboardingUid);
+  await fetchTaxLiabilityCountries(onboardingUid);
+  await submitTaxDeclaration(onboardingUid);
+  await fetchLatestTaxDeclaration(onboardingUid);
+
+  await sendAcceptedTerms(onboardingUid);
+  await sendIncomeAndEmploymentDetails(onboardingUid);
+
+  await submitApplication(onboardingUid);
+
+  console.log('Onboarding application complete');
+  console.log(`Mobile number: ${mobileNumber}`);
+  console.log(`Onboarding uid: ${onboardingUid}`);
+  return onboardingUid;
+};
+
+const main = async () => {
   try {
-    const createResponse = await createPerson(mobileNumber);
-    const onboardingUid = createResponse.data.onboardingUid;
-    const photoUrlResponse = await generateDocumentUploadUrl(
-      onboardingUid,
-      imageMd5,
-      'image/png'
-    );
-    await uploadImageToS3(photoUrlResponse.data.url, imageMd5);
-    await confirmDocUploaded(
-      onboardingUid,
-      photoUrlResponse.data.identityUploadUid
-    );
-    const phraseResponse = await generateVideoVerificationPhrase(onboardingUid);
-    const videoUrlResponse = await generateDocumentUploadUrl(
-      onboardingUid,
-      videoMd5,
-      'video/mp4'
-    );
-    await uploadVideoToS3(videoUrlResponse.data.url, videoMd5);
-    await confirmVideoUploaded(
-      onboardingUid,
-      videoUrlResponse.data.identityUploadUid,
-      phraseResponse.data.phraseUid
-    );
-    await fetchOutstandingActions(onboardingUid);
-    await getIncomeBands(onboardingUid);
-    await fetchTerms(onboardingUid);
-    await fetchTaxLiabilityCountries(onboardingUid);
-    await submitTaxDeclaration(onboardingUid);
-    await fetchLatestTaxDeclaration(onboardingUid);
+    const mobileNumber = '7963221120';
+    await onboard(mobileNumber);
 
-    await sendAcceptedTerms(onboardingUid);
-    await sendIncomeAndEmploymentDetails(onboardingUid);
-
-    await submitApplication(onboardingUid);
-
-    console.log("Onboarding application complete")
-    console.log(`Mobile number: ${mobileNumber}`)
-    console.log(`Onboarding uid: ${onboardingUid}`)
-    return onboardingUid;
+    // const {
+    //   data: {
+    //     authTokens: { accessToken }
+    //   }
+    // } = await createAccountHolder('<onboardingUid>');
+    // await getAccounts(accessToken);
+    // await getAccountHolderName(accessToken);
   } catch (err) {
     if (err.response) {
       console.error(`Status code: ${err.response.status}`);
@@ -474,12 +545,5 @@ const onboard = async (mobileNumber) => {
     }
   }
 };
-
-const main = async () => {
-  const mobileNumber = '07411218835';
-  await onboard(mobileNumber);
-
-  // await createAccountHolder(onboardingUid);
-}
 
 main();
