@@ -250,6 +250,20 @@ const getIncomeBands = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
+const getEmploymentSectors = async (onboardingUid) => {
+  const method = 'get';
+  const url = `${baseBaaSURL}/${onboardingUid}/employment-sectors`;
+  const data = {};
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
+};
+
 const fetchTerms = async (onboardingUid) => {
   const method = 'get';
   const url = `${baseBaaSURL}/${onboardingUid}/person-terms`;
@@ -419,7 +433,7 @@ const sendIncomeAndEmploymentDetails = async (onboardingUid) => {
 };
 const submitApplication = async (onboardingUid) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/submissionV2`;
+  const url = `${baseBaaSURL}/${onboardingUid}/submission`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -505,15 +519,12 @@ const onboard = async (mobileNumber) => {
     videoUrlData.identityUploadUid,
     phraseUid
   );
-  await fetchOutstandingActions(onboardingUid);
   await getIncomeBands(onboardingUid);
-  await fetchTerms(onboardingUid);
-  await fetchTaxLiabilityCountries(onboardingUid);
-  await submitTaxDeclaration(onboardingUid);
-  await fetchLatestTaxDeclaration(onboardingUid);
-
-  await sendAcceptedTerms(onboardingUid);
+  await getEmploymentSectors(onboardingUid);
   await sendIncomeAndEmploymentDetails(onboardingUid);
+
+  await fetchTerms(onboardingUid);
+  await sendAcceptedTerms(onboardingUid);
 
   await submitApplication(onboardingUid);
 
@@ -525,7 +536,7 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7963221120';
+    const mobileNumber = '7918756120';
     await onboard(mobileNumber);
 
     // const {
