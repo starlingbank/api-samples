@@ -250,6 +250,20 @@ const getIncomeBands = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
+const getSourcesOfFunds = async () => {
+  const method = 'get';
+  const url = `${baseBaaSURL}/sources-of-funds`;
+  const data = {};
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
+};
+
 const getEmploymentSectors = async (onboardingUid) => {
   const method = 'get';
   const url = `${baseBaaSURL}/${onboardingUid}/employment-sectors`;
@@ -415,7 +429,7 @@ const sendIncomeAndEmploymentDetails = async (onboardingUid) => {
     personIncomeDeclaration: {
       incomeBand: 'FROM_15000_TO_29000',
       currencyCode: 'GBP',
-      sourcesOfFunds: ['FRIENDS_AND_FAMILY']
+      sourcesOfFunds: ['MONTHLY_SALARY']
     },
     employmentDeclaration: {
       employmentSector: 'BUSINESS_SERVICES',
@@ -491,6 +505,7 @@ const getAccountHolderName = async (accessToken) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
+// --- ONBOARD ---
 const onboard = async (mobileNumber) => {
   const imageMd5 = 'bqZVYjU0gYnPeDsOh2bsCw==';
   const videoMd5 = '1B2M2Y8AsgTpgAmY7PhCfg==';
@@ -503,6 +518,8 @@ const onboard = async (mobileNumber) => {
     imageMd5,
     'image/png'
   );
+
+  await fetchOutstandingActions(onboardingUid);
   await uploadImageToS3(photoUrlData.url, imageMd5);
   await confirmDocUploaded(onboardingUid, photoUrlData.identityUploadUid);
   const {
@@ -520,6 +537,7 @@ const onboard = async (mobileNumber) => {
     phraseUid
   );
   await getIncomeBands(onboardingUid);
+  await getSourcesOfFunds();
   await getEmploymentSectors(onboardingUid);
   await sendIncomeAndEmploymentDetails(onboardingUid);
 
@@ -536,14 +554,14 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7918756120';
+    const mobileNumber = '7918756129';
     await onboard(mobileNumber);
 
     // const {
     //   data: {
     //     authTokens: { accessToken }
     //   }
-    // } = await createAccountHolder('<onboardingUid>');
+    // } = await createAccountHolder('a1e32a56-682f-4553-bc8a-e2de0c385332');
     // await getAccounts(accessToken);
     // await getAccountHolderName(accessToken);
   } catch (err) {
