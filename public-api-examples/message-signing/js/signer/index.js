@@ -236,9 +236,9 @@ const generateVideoVerificationPhrase = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const getIncomeBands = async (onboardingUid) => {
+const getIncomeBands = async () => {
   const method = 'get';
-  const url = `${baseBaaSURL}/${onboardingUid}/income-bands`;
+  const url = `${baseBaaSURL}/income-bands`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -264,9 +264,9 @@ const getSourcesOfFunds = async () => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const getEmploymentSectors = async (onboardingUid) => {
+const getEmploymentSectors = async () => {
   const method = 'get';
-  const url = `${baseBaaSURL}/${onboardingUid}/employment-sectors`;
+  const url = `${baseBaaSURL}/employment-sectors`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -350,9 +350,9 @@ const fetchLatestTaxDeclaration = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const fetchTaxLiabilityCountries = async (onboardingUid) => {
+const fetchTaxLiabilityCountries = async () => {
   const method = 'get';
-  const url = `${baseBaaSURL}/${onboardingUid}/tax-liability-declaration/countries`;
+  const url = `${baseBaaSURL}/tax-liability-declaration/countries`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -536,9 +536,9 @@ const onboard = async (mobileNumber) => {
     videoUrlData.identityUploadUid,
     phraseUid
   );
-  await getIncomeBands(onboardingUid);
+  await getIncomeBands();
   await getSourcesOfFunds();
-  await getEmploymentSectors(onboardingUid);
+  await getEmploymentSectors();
   await sendIncomeAndEmploymentDetails(onboardingUid);
 
   await fetchTerms(onboardingUid);
@@ -554,7 +554,7 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7918756129';
+    const mobileNumber = '7993736129';
     await onboard(mobileNumber);
 
     // const {
