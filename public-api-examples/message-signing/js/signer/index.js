@@ -84,9 +84,10 @@ const makeRequest = async ({
 };
 
 const createPerson = async (mobileNumber) => {
-  const method = 'put';
+  const method = 'post';
   const url = `${baseBaaSURL}`;
   const data = {
+    externalIdentifier: '124',
     mobileNumber: mobileNumber,
     title: 'MISS',
     preferredName: 'Bob',
@@ -427,7 +428,7 @@ const sendIncomeAndEmploymentDetails = async (onboardingUid) => {
   const url = `${baseBaaSURL}/${onboardingUid}/income`;
   const data = {
     personIncomeDeclaration: {
-      incomeBand: 'FROM_15000_TO_29000',
+      incomeBand: 'BAND_1',
       currencyCode: 'GBP',
       sourcesOfFunds: ['MONTHLY_SALARY']
     },
@@ -511,8 +512,13 @@ const onboard = async (mobileNumber) => {
   const videoMd5 = '1B2M2Y8AsgTpgAmY7PhCfg==';
 
   const {
-    data: { onboardingUid }
+    request: {
+      res: {
+        headers: { location }
+      }
+    }
   } = await createPerson(mobileNumber);
+  const onboardingUid = location.split('/')[4];
   const { data: photoUrlData } = await generateDocumentUploadUrl(
     onboardingUid,
     imageMd5,
@@ -554,7 +560,7 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7993736129';
+    const mobileNumber = '7993487129';
     await onboard(mobileNumber);
 
     // const {
