@@ -87,7 +87,7 @@ const createPerson = async (mobileNumber) => {
   const method = 'post';
   const url = `${baseBaaSURL}`;
   const data = {
-    externalIdentifier: '124',
+    externalIdentifier: 'ABC1',
     mobileNumber: mobileNumber,
     title: 'MISS',
     preferredName: 'Bob',
@@ -144,12 +144,12 @@ const createPerson = async (mobileNumber) => {
 };
 
 const generateDocumentUploadUrl = async (
-  onboardingUid,
+  onboardingPath,
   contentMd5,
   contentType
 ) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/identity/upload-url`;
+  const url = `${onboardingPath}/identity/upload-url`;
   const data = {
     mimeType: contentType,
     md5Checksum: contentMd5
@@ -184,9 +184,9 @@ const uploadVideoToS3 = async (presignedUrl, contentMd5) => {
   });
 };
 
-const confirmDocUploaded = async (onboardingUid, identityUploadUid) => {
+const confirmDocUploaded = async (onboardingPath, identityUploadUid) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/identity/${identityUploadUid}/confirm-image-upload`;
+  const url = `${onboardingPath}/identity/${identityUploadUid}/confirm-image-upload`;
   const data = {
     idDocumentImageType: 'ID_PHOTO_FRONT',
     idDocumentType: 'FULL_DRIVING_LICENSE',
@@ -203,12 +203,12 @@ const confirmDocUploaded = async (onboardingUid, identityUploadUid) => {
 };
 
 const confirmVideoUploaded = async (
-  onboardingUid,
+  onboardingPath,
   identityUploadUid,
   phraseUid
 ) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/identity/${identityUploadUid}/confirm-video-upload`;
+  const url = `${onboardingPath}/identity/${identityUploadUid}/confirm-video-upload`;
   const data = {
     phraseUid: phraseUid,
     filename: 'video.mp4'
@@ -223,9 +223,9 @@ const confirmVideoUploaded = async (
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const generateVideoVerificationPhrase = async (onboardingUid) => {
+const generateVideoVerificationPhrase = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/identity/phrases`;
+  const url = `${onboardingPath}/identity/phrases`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -279,9 +279,9 @@ const getEmploymentSectors = async () => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const fetchTerms = async (onboardingUid) => {
+const fetchTerms = async (onboardingPath) => {
   const method = 'get';
-  const url = `${baseBaaSURL}/${onboardingUid}/person-terms`;
+  const url = `${onboardingPath}/terms`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -293,9 +293,9 @@ const fetchTerms = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const acceptTermsAndSubmit = async (onboardingUid) => {
+const acceptTermsAndSubmit = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/submission`;
+  const url = `${onboardingPath}/submission`;
   const data = {
     acceptedTerms: [
       { termDocumentName: 'GeneralTerms', version: 5 },
@@ -323,9 +323,9 @@ const acceptTermsAndSubmit = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const fetchOutstandingActions = async (onboardingUid) => {
+const fetchOutstandingActions = async (onboardingPath) => {
   const method = 'get';
-  const url = `${baseBaaSURL}/${onboardingUid}/status`;
+  const url = `${onboardingPath}/status`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -337,9 +337,9 @@ const fetchOutstandingActions = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const fetchLatestTaxDeclaration = async (onboardingUid) => {
+const fetchLatestTaxDeclaration = async (onboardingPath) => {
   const method = 'get';
-  const url = `${baseBaaSURL}/${onboardingUid}/tax-liability-declaration`;
+  const url = `${onboardingPath}/tax-liability-declaration`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -365,9 +365,9 @@ const fetchTaxLiabilityCountries = async () => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const submitTaxDeclaration = async (onboardingUid) => {
+const submitTaxDeclaration = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/tax-liability-declaration`;
+  const url = `${onboardingPath}/tax-liability-declaration`;
   const data = {
     taxLiabilityDeclarationAnswer: 'YES',
     countryDeclarations: [
@@ -384,9 +384,9 @@ const submitTaxDeclaration = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const resubmit = async (onboardingUid) => {
+const resubmit = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/re-submission`;
+  const url = `${onboardingPath}/re-submission`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -398,9 +398,9 @@ const resubmit = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const sendAcceptedTerms = async (onboardingUid) => {
+const sendAcceptedTerms = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/terms`;
+  const url = `${onboardingPath}/terms`;
   const data = {
     acceptedTerms: [
       { termDocumentName: 'GeneralTerms', version: 5 },
@@ -423,9 +423,9 @@ const sendAcceptedTerms = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const sendIncomeAndEmploymentDetails = async (onboardingUid) => {
+const sendIncomeAndEmploymentDetails = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/income`;
+  const url = `${onboardingPath}/income`;
   const data = {
     personIncomeDeclaration: {
       incomeBand: 'BAND_1',
@@ -446,9 +446,9 @@ const sendIncomeAndEmploymentDetails = async (onboardingUid) => {
 
   return await makeRequest({ url, method, authorization, digest, data });
 };
-const submitApplication = async (onboardingUid) => {
+const submitApplication = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/submission`;
+  const url = `${onboardingPath}/submission`;
   const data = {};
 
   const { digest, authorization } = calculateAuthorisationAndDigest(
@@ -460,9 +460,9 @@ const submitApplication = async (onboardingUid) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const createAccountHolder = async (onboardingUid) => {
+const createAccountHolder = async (onboardingPath) => {
   const method = 'put';
-  const url = `${baseBaaSURL}/${onboardingUid}/account-holders`;
+  const url = `${onboardingPath}/account-holders`;
   const data = {
     accountCurrency: 'GBP'
   };
@@ -514,53 +514,52 @@ const onboard = async (mobileNumber) => {
   const {
     request: {
       res: {
-        headers: { location }
+        headers: { location: onboardingPath }
       }
     }
   } = await createPerson(mobileNumber);
-  const onboardingUid = location.split('/')[4];
   const { data: photoUrlData } = await generateDocumentUploadUrl(
-    onboardingUid,
+    onboardingPath,
     imageMd5,
     'image/png'
   );
 
-  await fetchOutstandingActions(onboardingUid);
+  await fetchOutstandingActions(onboardingPath);
   await uploadImageToS3(photoUrlData.url, imageMd5);
-  await confirmDocUploaded(onboardingUid, photoUrlData.identityUploadUid);
+  await confirmDocUploaded(onboardingPath, photoUrlData.identityUploadUid);
   const {
     data: { phraseUid }
-  } = await generateVideoVerificationPhrase(onboardingUid);
+  } = await generateVideoVerificationPhrase(onboardingPath);
   const { data: videoUrlData } = await generateDocumentUploadUrl(
-    onboardingUid,
+    onboardingPath,
     videoMd5,
     'video/mp4'
   );
   await uploadVideoToS3(videoUrlData.url, videoMd5);
   await confirmVideoUploaded(
-    onboardingUid,
+    onboardingPath,
     videoUrlData.identityUploadUid,
     phraseUid
   );
   await getIncomeBands();
   await getSourcesOfFunds();
   await getEmploymentSectors();
-  await sendIncomeAndEmploymentDetails(onboardingUid);
+  await sendIncomeAndEmploymentDetails(onboardingPath);
 
-  await fetchTerms(onboardingUid);
-  await sendAcceptedTerms(onboardingUid);
+  await fetchTerms(onboardingPath);
+  await sendAcceptedTerms(onboardingPath);
 
-  await submitApplication(onboardingUid);
+  await submitApplication(onboardingPath);
 
   console.log('Onboarding application complete');
   console.log(`Mobile number: ${mobileNumber}`);
-  console.log(`Onboarding uid: ${onboardingUid}`);
-  return onboardingUid;
+  console.log(`Onboarding uid: ${onboardingPath.split('/')[4]}`);
+  return onboardingPath.split('/')[4];
 };
 
 const main = async () => {
   try {
-    const mobileNumber = '7993487129';
+    const mobileNumber = '7963578511';
     await onboard(mobileNumber);
 
     // const {
