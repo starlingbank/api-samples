@@ -460,9 +460,9 @@ const submitApplication = async (onboardingPath) => {
   return await makeRequest({ url, method, authorization, digest, data });
 };
 
-const createAccountHolder = async (onboardingPath) => {
+const createAccountHolder = async (onboardingUid) => {
   const method = 'put';
-  const url = `${onboardingPath}/account-holders`;
+  const url = `${baseBaaSURL}/${onboardingUid}/account-holder`;
   const data = {
     accountCurrency: 'GBP'
   };
@@ -566,7 +566,7 @@ const main = async () => {
     //   data: {
     //     authTokens: { accessToken }
     //   }
-    // } = await createAccountHolder('a1e32a56-682f-4553-bc8a-e2de0c385332');
+    // } = await createAccountHolder('<onboardingUid>');
     // await getAccounts(accessToken);
     // await getAccountHolderName(accessToken);
   } catch (err) {
