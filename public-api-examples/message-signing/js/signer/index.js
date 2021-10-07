@@ -87,7 +87,7 @@ const createPerson = async (mobileNumber) => {
   const method = 'post';
   const url = `${baseBaaSURL}`;
   const data = {
-    externalIdentifier: 'ABC1',
+    externalIdentifier: 'ABC3',
     mobileNumber: mobileNumber,
     title: 'MISS',
     preferredName: 'Bob',
@@ -97,39 +97,25 @@ const createPerson = async (mobileNumber) => {
     dateOfBirth: '2000-12-30',
     email: 'gytha.ogg@example.com',
     currentAddress: {
-      line1: 'Flat 101',
-      line2: 'Hudson House',
-      line3: '4 Yeo Street',
-      subBuildingName: 'Flat 101',
-      buildingName: 'Hudson House',
-      buildingNumber: '4',
-      thoroughfare: 'Yeo Street',
-      dependantLocality: 'Langdon Park',
+      postcode: 'E3 3NU',
       postTown: 'London',
-      postCode: 'E3 3NU',
+      flatIdentifier: '3',
       countryCode: 'GB',
-      udprn: '52379171',
-      umprn: '1234567890',
+      streetNumber: '3',
+      streetName: 'Yeo Street',
       from: '2018-01-01',
       to: '2018-01-02'
     },
     previousAddresses: [
       {
-        line1: 'Flat 101',
-        line2: 'Hudson House',
-        line3: '4 Yeo Street',
-        subBuildingName: 'Flat 101',
-        buildingName: 'Hudson House',
-        buildingNumber: '4',
-        thoroughfare: 'Yeo Street',
-        dependantLocality: 'Langdon Park',
+        postcode: 'E3 3NU',
         postTown: 'London',
-        postCode: 'E3 3NU',
         countryCode: 'GB',
-        udprn: '52379171',
-        umprn: '1234567890',
-        from: '2018-01-01',
-        to: '2018-01-02'
+        flatIdentifier: '3',
+        streetNumber: '3',
+        streetName: 'Yeo Street',
+        from: '2017-01-01',
+        to: '2018-01-01'
       }
     ]
   };
@@ -142,6 +128,22 @@ const createPerson = async (mobileNumber) => {
 
   return await makeRequest({ url, method, authorization, digest, data });
 };
+
+const updatePersonalInfo = async (onboardingPath) => {
+  const method = 'put';
+  const url = `${onboardingPath}/personal-info`;
+  const data = {
+    dateOfBirth: '2018-01-15'
+  };
+
+  const { digest, authorization } = calculateAuthorisationAndDigest(
+    method,
+    url,
+    data
+  );
+
+  return await makeRequest({ url, method, authorization, digest, data });
+}
 
 const generateDocumentUploadUrl = async (
   onboardingPath,
@@ -518,13 +520,14 @@ const onboard = async (mobileNumber) => {
       }
     }
   } = await createPerson(mobileNumber);
+
   const { data: photoUrlData } = await generateDocumentUploadUrl(
     onboardingPath,
     imageMd5,
     'image/png'
   );
-
   await fetchOutstandingActions(onboardingPath);
+  await updatePersonalInfo(onboardingPath);
   await uploadImageToS3(photoUrlData.url, imageMd5);
   await confirmDocUploaded(onboardingPath, photoUrlData.identityUploadUid);
   const {
@@ -549,6 +552,8 @@ const onboard = async (mobileNumber) => {
   await fetchTerms(onboardingPath);
   await sendAcceptedTerms(onboardingPath);
 
+  await fetchOutstandingActions(onboardingPath);
+
   await submitApplication(onboardingPath);
 
   console.log('Onboarding application complete');
@@ -559,7 +564,7 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7963578511';
+    const mobileNumber = '7963578517';
     await onboard(mobileNumber);
 
     // const {
