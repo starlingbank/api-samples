@@ -5,9 +5,9 @@ const fs = require('fs');
 const keyUid = 'aaa-bbb';
 const baseURL = 'https://api-sandbox.starlingbank.com';
 const baseBaaSURL = '/api/v2/onboard';
-const date = new Date().toISOString();
 
 const calculateAuthorisationAndDigest = (method, url, data) => {
+  const date = new Date().toISOString();
   const digest =
     data === ''
       ? ''
@@ -25,7 +25,8 @@ const calculateAuthorisationAndDigest = (method, url, data) => {
 
   return {
     digest,
-    authorization: `Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`
+    authorization: `Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`,
+    date
   };
 };
 
@@ -35,6 +36,7 @@ const calculateOAuthAuthorisationAndDigest = (
   data,
   accessToken
 ) => {
+  const date = new Date().toISOString();
   const digest =
     data === ''
       ? ''
@@ -52,7 +54,8 @@ const calculateOAuthAuthorisationAndDigest = (
 
   return {
     digest,
-    authorization: `Bearer ${accessToken};Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`
+    authorization: `Bearer ${accessToken};Signature keyid="${keyUid}",algorithm="rsa-sha512",headers="(request-target) Date Digest",signature="${signature}"`,
+    date
   };
 };
 
@@ -61,6 +64,7 @@ const makeRequest = async ({
   method,
   authorization,
   digest,
+  date,
   data = ''
 }) => {
   console.log('-------------------');
@@ -120,30 +124,30 @@ const createPerson = async (mobileNumber) => {
     ]
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const updatePersonalInfo = async (onboardingPath) => {
   const method = 'put';
   const url = `${onboardingPath}/personal-info`;
   const data = {
-    dateOfBirth: '2018-01-15'
+    dateOfBirth: '2001-01-15'
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
-}
+  return await makeRequest({ url, method, authorization, digest, date, data });
+};
 
 const generateDocumentUploadUrl = async (
   onboardingPath,
@@ -157,13 +161,13 @@ const generateDocumentUploadUrl = async (
     md5Checksum: contentMd5
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const uploadImageToS3 = async (presignedUrl, contentMd5) => {
@@ -195,13 +199,13 @@ const confirmDocUploaded = async (onboardingPath, identityUploadUid) => {
     filename: 'license.png'
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const confirmVideoUploaded = async (
@@ -216,13 +220,13 @@ const confirmVideoUploaded = async (
     filename: 'video.mp4'
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const generateVideoVerificationPhrase = async (onboardingPath) => {
@@ -230,13 +234,13 @@ const generateVideoVerificationPhrase = async (onboardingPath) => {
   const url = `${onboardingPath}/identity/phrases`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const getIncomeBands = async () => {
@@ -244,13 +248,13 @@ const getIncomeBands = async () => {
   const url = `${baseBaaSURL}/income-bands`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const getSourcesOfFunds = async () => {
@@ -258,13 +262,13 @@ const getSourcesOfFunds = async () => {
   const url = `${baseBaaSURL}/sources-of-funds`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const getEmploymentSectors = async () => {
@@ -272,13 +276,13 @@ const getEmploymentSectors = async () => {
   const url = `${baseBaaSURL}/employment-sectors`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const fetchTerms = async (onboardingPath) => {
@@ -286,43 +290,13 @@ const fetchTerms = async (onboardingPath) => {
   const url = `${onboardingPath}/terms`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
-};
-
-const acceptTermsAndSubmit = async (onboardingPath) => {
-  const method = 'put';
-  const url = `${onboardingPath}/submission`;
-  const data = {
-    acceptedTerms: [
-      { termDocumentName: 'GeneralTerms', version: 5 },
-      { termDocumentName: 'PersonalSchedule', version: 4 },
-      {
-        termDocumentName: 'FinancialCompensationSchemeInformation',
-        version: 3
-      },
-      { termDocumentName: 'FeesAndLimits', version: 11 },
-      { termDocumentName: 'StarlingBankPrivacyPolicy', version: 7 }
-    ],
-    personIncomeDeclaration: {
-      incomeBand: 'LESS_THAN_15000',
-      currencyCode: 'GBP',
-      sourcesOfFunds: ['BENEFITS']
-    }
-  };
-
-  const { digest, authorization } = calculateAuthorisationAndDigest(
-    method,
-    url,
-    data
-  );
-
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const fetchOutstandingActions = async (onboardingPath) => {
@@ -330,27 +304,13 @@ const fetchOutstandingActions = async (onboardingPath) => {
   const url = `${onboardingPath}/status`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
-};
-
-const fetchLatestTaxDeclaration = async (onboardingPath) => {
-  const method = 'get';
-  const url = `${onboardingPath}/tax-liability-declaration`;
-  const data = {};
-
-  const { digest, authorization } = calculateAuthorisationAndDigest(
-    method,
-    url,
-    data
-  );
-
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const fetchTaxLiabilityCountries = async () => {
@@ -358,13 +318,13 @@ const fetchTaxLiabilityCountries = async () => {
   const url = `${baseBaaSURL}/tax-liability-declaration/countries`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const submitTaxDeclaration = async (onboardingPath) => {
@@ -377,52 +337,33 @@ const submitTaxDeclaration = async (onboardingPath) => {
     ]
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
-const resubmit = async (onboardingPath) => {
-  const method = 'put';
-  const url = `${onboardingPath}/re-submission`;
-  const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
-    method,
-    url,
-    data
-  );
-
-  return await makeRequest({ url, method, authorization, digest, data });
-};
-
-const sendAcceptedTerms = async (onboardingPath) => {
+const sendAcceptedTerms = async (onboardingPath, personTermsAcceptances) => {
   const method = 'put';
   const url = `${onboardingPath}/terms`;
   const data = {
-    acceptedTerms: [
-      { termDocumentName: 'GeneralTerms', version: 5 },
-      { termDocumentName: 'PersonalSchedule', version: 4 },
-      {
-        termDocumentName: 'FinancialCompensationSchemeInformation',
-        version: 3
-      },
-      { termDocumentName: 'FeesAndLimits', version: 11 },
-      { termDocumentName: 'StarlingBankPrivacyPolicy', version: 7 }
-    ]
+    acceptedTerms: personTermsAcceptances.map((term) => ({
+      termDocumentName: term.documentName,
+      version: term.version
+    }))
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const sendIncomeAndEmploymentDetails = async (onboardingPath) => {
@@ -440,26 +381,26 @@ const sendIncomeAndEmploymentDetails = async (onboardingPath) => {
     }
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 const submitApplication = async (onboardingPath) => {
   const method = 'put';
   const url = `${onboardingPath}/submission`;
   const data = {};
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const createAccountHolder = async (onboardingUid) => {
@@ -469,13 +410,13 @@ const createAccountHolder = async (onboardingUid) => {
     accountCurrency: 'GBP'
   };
 
-  const { digest, authorization } = calculateAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateAuthorisationAndDigest(
     method,
     url,
     data
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const getAccounts = async (accessToken) => {
@@ -483,14 +424,14 @@ const getAccounts = async (accessToken) => {
   const url = `/api/v2/accounts`;
   const data = {};
 
-  const { digest, authorization } = calculateOAuthAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateOAuthAuthorisationAndDigest(
     method,
     url,
     data,
     accessToken
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 const getAccountHolderName = async (accessToken) => {
@@ -498,14 +439,14 @@ const getAccountHolderName = async (accessToken) => {
   const url = `/api/v2/account-holder/name`;
   const data = {};
 
-  const { digest, authorization } = calculateOAuthAuthorisationAndDigest(
+  const { digest, authorization, date } = calculateOAuthAuthorisationAndDigest(
     method,
     url,
     data,
     accessToken
   );
 
-  return await makeRequest({ url, method, authorization, digest, data });
+  return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
 // --- ONBOARD ---
@@ -526,8 +467,6 @@ const onboard = async (mobileNumber) => {
     imageMd5,
     'image/png'
   );
-  await fetchOutstandingActions(onboardingPath);
-  await updatePersonalInfo(onboardingPath);
   await uploadImageToS3(photoUrlData.url, imageMd5);
   await confirmDocUploaded(onboardingPath, photoUrlData.identityUploadUid);
   const {
@@ -544,13 +483,15 @@ const onboard = async (mobileNumber) => {
     videoUrlData.identityUploadUid,
     phraseUid
   );
+
   await getIncomeBands();
   await getSourcesOfFunds();
   await getEmploymentSectors();
+
   await sendIncomeAndEmploymentDetails(onboardingPath);
 
-  await fetchTerms(onboardingPath);
-  await sendAcceptedTerms(onboardingPath);
+  const { personTermsAcceptances } = await fetchTerms(onboardingPath);
+  await sendAcceptedTerms(onboardingPath, personTermsAcceptances);
 
   await fetchOutstandingActions(onboardingPath);
 
@@ -564,14 +505,14 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7963578517';
+    const mobileNumber = '7931635125';
     await onboard(mobileNumber);
 
     // const {
     //   data: {
     //     authTokens: { accessToken }
     //   }
-    // } = await createAccountHolder('<onboardingUid>');
+    // } = await createAccountHolder('<onboarding uid>');
     // await getAccounts(accessToken);
     // await getAccountHolderName(accessToken);
   } catch (err) {
