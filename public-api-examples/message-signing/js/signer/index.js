@@ -346,7 +346,6 @@ const submitTaxDeclaration = async (onboardingPath) => {
   return await makeRequest({ url, method, authorization, digest, date, data });
 };
 
-
 const sendAcceptedTerms = async (onboardingPath, personTermsAcceptances) => {
   const method = 'put';
   const url = `${onboardingPath}/terms`;
@@ -490,7 +489,9 @@ const onboard = async (mobileNumber) => {
 
   await sendIncomeAndEmploymentDetails(onboardingPath);
 
-  const { personTermsAcceptances } = await fetchTerms(onboardingPath);
+  const {
+    data: { personTermsAcceptances }
+  } = await fetchTerms(onboardingPath);
   await sendAcceptedTerms(onboardingPath, personTermsAcceptances);
 
   await fetchOutstandingActions(onboardingPath);
