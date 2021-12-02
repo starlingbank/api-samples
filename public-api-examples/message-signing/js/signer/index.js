@@ -89,6 +89,7 @@ const createPerson = async (mobileNumber) => {
   const data = {
     externalIdentifier: 'ABC1',
     mobileNumber: mobileNumber,
+    mobileNumberVerified: true,
     title: 'MISS',
     preferredName: 'Bob',
     firstName: 'Gytha',
