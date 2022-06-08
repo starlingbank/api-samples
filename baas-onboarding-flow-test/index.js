@@ -2,7 +2,9 @@ const axios = require('axios').default;
 const crypto = require('crypto');
 const fs = require('fs');
 
-const keyUid = 'aaa-bbb';
+// Skip to the bottom for the main method, where some input from you is required
+
+const keyUid = 'putYourKeyUidFromYourSandboxApiKeyHere'; // Replace this with the key uid from your API sandbox key
 const baseURL = 'https://api-sandbox.starlingbank.com';
 const baseBaaSURL = '/api/v2/onboard';
 
@@ -87,40 +89,57 @@ const makeRequest = async ({
   return response;
 };
 
-const createPerson = async (mobileNumber) => {
+
+const createPerson = async (externalIdentifier, mobileNumber) => {
   const method = 'post';
   const url = `${baseBaaSURL}`;
   const data = {
-    externalIdentifier: 'ABC3',
+    externalIdentifier: externalIdentifier,
     mobileNumber: mobileNumber,
     mobileNumberVerified: true,
-    title: 'MISS',
-    preferredName: 'Bob',
-    firstName: 'Gytha',
-    middleName: 'Courtney',
-    lastName: 'Ogg',
+    title: 'Dr',
+    preferredName: 'Sean',
+    firstName: 'Sean',
+    middleName: 'Boromir',
+    lastName: 'Bean',
     dateOfBirth: '2000-12-30',
-    email: 'gytha.ogg@example.com',
+    email: 'sean.bean@example.com',
+    addressHistoryCoversMinimumTerm: true,
     currentAddress: {
-      postcode: 'E3 3NU',
-      postTown: 'London',
-      flatIdentifier: '3',
+      addressFormat: "UK_PAF",
+      streetName: 'House of Frodo Baggins',
+      line1: 'Bag End',
+      line2: 'The Shire',
+      line3: 'Middle Earth',
+      subBuildingName: 'Bag End',
+      buildingName: 'Smial',
+      buildingNumber: '0',
+      thoroughfare: '',
+      dependantLocality: '',
+      postTown: 'Middle Earth',
+      postcode: 'ME15 4LF',
       countryCode: 'GB',
       streetNumber: '3',
-      streetName: 'Yeo Street',
-      from: '2018-01-01',
-      to: '2018-01-02'
+      addressHistoryCoversMinimumTerm: true,
     },
     previousAddresses: [
       {
-        postcode: 'E3 3NU',
-        postTown: 'London',
+        addressFormat: "UK_PAF",
+        streetName: 'House of Elron',
+        line1: 'Rivendell',
+        line2: 'Middle Earth',
+        line3: '',
+        subBuildingName: '',
+        buildingName: 'House of Elrond',
+        buildingNumber: '0',
+        thoroughfare: '',
+        dependantLocality: '',
+        postTown: 'Rivendell',
+        postcode: 'ME15 4LF',
         countryCode: 'GB',
-        flatIdentifier: '3',
-        streetNumber: '3',
-        streetName: 'Yeo Street',
-        from: '2017-01-01',
-        to: '2018-01-01'
+        udprn: '52379171',
+        umprn: '12345678',
+        addressHistoryCoversMinimumTerm: true,
       }
     ]
   };
@@ -450,7 +469,7 @@ const getAccountHolderName = async (accessToken) => {
 };
 
 // --- ONBOARD ---
-const onboard = async (mobileNumber) => {
+const onboard = async (externalIdentifier, mobileNumber) => {
   const imageMd5 = 'bqZVYjU0gYnPeDsOh2bsCw==';
   const videoMd5 = '1B2M2Y8AsgTpgAmY7PhCfg==';
 
@@ -460,7 +479,7 @@ const onboard = async (mobileNumber) => {
         headers: { location: onboardingPath }
       }
     }
-  } = await createPerson(mobileNumber);
+  } = await createPerson(externalIdentifier, mobileNumber);
 
   const { data: photoUrlData } = await generateDocumentUploadUrl(
     onboardingPath,
@@ -507,16 +526,9 @@ const onboard = async (mobileNumber) => {
 
 const main = async () => {
   try {
-    const mobileNumber = '7931635125';
-    await onboard(mobileNumber);
-
-    // const {
-    //   data: {
-    //     authTokens: { accessToken }
-    //   }
-    // } = await createAccountHolder('<onboarding uid>');
-    // await getAccounts(accessToken);
-    // await getAccountHolderName(accessToken);
+    const externalIdentifier = 'R53843b5t51577B55MCLP85555COP60'; // needs to be new and globally unique on every call
+    const mobileNumber = '0741984700'; // needs to be new and globally unique on every call
+    await onboard(externalIdentifier, mobileNumber);
   } catch (err) {
     if (err.response) {
       console.error(`Status code: ${err.response.status}`);

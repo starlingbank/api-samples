@@ -1,8 +1,0 @@
-{
-  "main": "index.js",
-  "dependencies": {
-    "express": "^4.17.1",
-    "tsscmp": "^1.0.6"
-  },
-  "author": "Adam Jones <adam.jones@starlingbank.com>"
-}

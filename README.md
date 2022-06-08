@@ -1,9 +1,36 @@
-# 📖 Starling Bank API samples
+WHAT THIS IS
+------------
 
-This repository contains code samples to make it easy to integrate with the Starling APIs. We can't wait to see what cool stuff you'll make!
+- Javascript code that calls all BAAS endpoints involved in user onboarding
+- Allows you to create BAAS customers in demo
 
-Here, you'll find examples for both our Public API endpoints and our Payment Services API endpoints.
+USAGE
+------------
 
-For more information, see our [Public API documentation](https://developer.starlingbank.com/docs) or our [Payment Services API documentation](https://developer.starlingbank.com/payments/docs).
+- Setup javascript
+  - download nodejs.org
+  - in terminal, navigate to this directory
+  - download all necessary javascript libraries by running `npm install`
 
-As with everything we do at Starling, we'd love to learn how we can make stuff better. If you have feedback, contact us on the [Starling Developer Slack](https://developer.starlingbank.com/community).
+- Generate keys
+  - in terminal, navigate to this directory
+  - use the directions in `API keys and message signing > 1. Generate key pairs` to generate keys within this directory
+  - at this point, you should see a private and public key, and a private and public rotation key in this directory
+
+- Setup registered application
+  - Go to your developer.starlingbank.com account
+  - Create a new application at developer.starlingbank.com/application/list
+  - In your application, go to "Keys" on the left navigation panel
+  - Navigate to "Sandbox"
+  - Click "Add key"
+  - Paste in your public key and public rotation key generated above in the appropriate slots (they are both RSA)
+  - Copy the "key uid" from your newly created Sandbox API key into the `keyUid` field in index.js
+
+- Run the application
+  - each time you onboard a customer, you need new values for `externalIdentifier` and `mobileNumber` in `index.js` `main()`
+  - in terminal, navigate to this directory
+  - run  `node index.js`
+  - you should see a serious of API calls without output, and ultimately, a success message
+
+
+

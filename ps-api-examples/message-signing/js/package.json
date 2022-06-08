@@ -1,9 +1,0 @@
-{
-  "name": "ps-signing",
-  "main": "index.js",
-  "author": "Saffaanh Soobratty <saffaanh.soobratty@starlingbank.com>",
-  "dependencies": {
-    "axios": "^0.21.1",
-    "uuid": "^8.3.2"
-  }
-}
