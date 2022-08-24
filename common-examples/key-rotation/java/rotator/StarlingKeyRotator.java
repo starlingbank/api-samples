@@ -14,6 +14,7 @@ import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -44,7 +45,7 @@ class StarlingKeyRotator {
 
     // Calculate the text to sign
     String payload = Base64.getEncoder().encodeToString(publicApiKey.getEncoded());
-    String date = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     String digest = createDigest(payload);
     String textToSign = String.format("Date: %s\nDigest: %s", date, digest);
 
