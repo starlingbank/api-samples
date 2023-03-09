@@ -28,9 +28,11 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import spark.Request;
@@ -97,6 +99,7 @@ public class StarlingMessageSignatureValidator {
     Map<String, String> authorisationHeaders = mapAuthorisationHeaders(request);
 
     // Parse the Authorization Header to get required sub elements.
+    String keyid = getHeader("keyid", authorisationHeaders);
     String algorithm = getHeader("algorithm", authorisationHeaders);
     String signature = getHeader("signature", authorisationHeaders);
     String headers = getHeader("headers", authorisationHeaders);
@@ -127,16 +130,16 @@ public class StarlingMessageSignatureValidator {
 
     // Carry out the signature validation checks.
     String validationChecks = Joiner.on("\n")
-        .join(validateSignature(publicKey, algorithm, signingString, signature));
+        .join(validateSignature(keyid, publicKey, algorithm, signingString, signature));
 
     String responseString = Joiner.on("\n").join(responseBody);
-    response.type("text/xml");
+    response.type("text/plain");
 
     return Joiner.on("\n").join(responseString, validationChecks);
   }
 
-  private static List<String> validateSignature(PublicKey publicKey, String algorithm, String headers,
-      String signature)
+  private static List<String> validateSignature(String keyid, PublicKey publicKey, String algorithm, String headers,
+                                                String signature)
       throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
     List<String> verificationChecks = new ArrayList<>();
 
@@ -158,6 +161,14 @@ public class StarlingMessageSignatureValidator {
     sig.initVerify(publicKey);
     sig.update(headers.getBytes());
 
+    boolean keyIdValid;
+    try {
+      UUID.fromString(keyid);
+      keyIdValid = true;
+    } catch (IllegalArgumentException e) {
+      keyIdValid = false;
+    }
+    verificationChecks.add("keyid: " + keyid + " " + (keyIdValid ? "✅" : "⚠️"));
     verificationChecks.add("algorithm: " + algorithm + " -> " + javaAlgorithm);
     verificationChecks.add("headers: " + headers.replaceAll("\n", " "));
     verificationChecks.add("signature: " + signature + "\n");
@@ -165,7 +176,12 @@ public class StarlingMessageSignatureValidator {
     // Verify the signature against the signed string.
     try {
       if (sig.verify(decodedSignature)) {
-        verificationChecks.add("Message signed correctly.");
+        if (keyIdValid) {
+          verificationChecks.add("Message signed correctly.");
+        } else {
+          verificationChecks.add(
+              "Message signed correctly but the keyid in the signature header is not a UUID. This should be the keyid provided by Starling.");
+        }
       } else {
         verificationChecks.add("Message signature invalid.");
       }
@@ -189,12 +205,20 @@ public class StarlingMessageSignatureValidator {
   }
 
   private static Map<String, String> mapAuthorisationHeaders(Request request) {
-    Map<String, String> headerMap = null;
+    Map<String, String> headerMap = new HashMap<>();
     try {
-      String authHeader = request.headers("Authorization");
-      headerMap = Splitter.on(',')
-          .withKeyValueSeparator(Splitter.on('=').limit(2))
-          .split(authHeader);
+      Splitter.on(";")
+          .splitToStream(request.headers("Authorization"))
+          .map(part -> part.replace("Bearer ", "").replace("Signature ", ""))
+          .forEach(part -> {
+            if (part.contains(",") && part.contains("=")) {
+              headerMap.putAll(Splitter.on(',')
+                  .withKeyValueSeparator(Splitter.on('=').limit(2))
+                  .split(part));
+            } else {
+              headerMap.put("token", part);
+            }
+          });
     } catch (Exception e) {
       System.err
           .println("ERROR: Could not process Authorization header, aborting validation check.");
