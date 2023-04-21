@@ -2,7 +2,7 @@
   "main": "index.js",
   "author": "Adam Jones <adam.jones@starlingbank.com>",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "uuid": "^8.1.0"
   }
 }
