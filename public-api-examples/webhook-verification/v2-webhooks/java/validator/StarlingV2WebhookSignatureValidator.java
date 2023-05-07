@@ -13,7 +13,7 @@ class StarlingV2WebhookSignatureValidator {
 
     if (args.length != 3) {
       System.err.println("Expected 3 arguments but got " + args.length);
-      System.out.println("Usage: java StarlingV2WebhookSignatureValidator <signature> <payload>");
+      System.out.println("Usage: java StarlingV2WebhookSignatureValidator <public key> <signature> <payload>");
       System.out.println("You may need to surround the arguments in quotes, and escape any inner quotes");
       return;
     }
